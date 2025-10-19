@@ -5,48 +5,63 @@
     Subscribe Form Activation
     -------------------------------------*/
     $('[data-pixsaas]').each(function() {
-        var $this = $(this);
-        $('.form-result', $this).css('display', 'none');
+        const $form = $(this);
+        const $formResult = $('.form-result', $form);
+        const $submitButton = $('button[type="submit"]', $form);
 
-        $this.submit(function() {
+        $formResult.hide();
 
-            $('button[type="submit"]', $this).addClass('clicked');
+        const resetFormState = function(message, cssClassToAdd, cssClassesToRemove) {
+            const classesToRemove = Array.isArray(cssClassesToRemove) ? cssClassesToRemove.join(' ') : cssClassesToRemove;
 
-            // Create a object and assign all fields name and value.
-            var values = {};
+            $formResult
+                .stop(true, true)
+                .removeClass(classesToRemove)
+                .addClass(cssClassToAdd)
+                .fadeIn(200)
+                .show()
+                .delay(5000)
+                .fadeOut(400, function() {
+                    $(this).removeClass(cssClassToAdd).hide();
+                });
+            $('.form-result > .content', $form).text(message);
+            $submitButton.removeClass('clicked');
+        };
 
-            $('[name]', $this).each(function() {
-                var $this = $(this),
-                    $name = $this.attr('name'),
-                    $value = $this.val();
-                values[$name] = $value;
+        $form.on('submit', function(event) {
+            event.preventDefault();
+            $submitButton.addClass('clicked');
+
+            const values = {};
+            $('[name]', $form).each(function() {
+                const $field = $(this);
+                const fieldName = $field.attr('name');
+                if (fieldName) {
+                    values[fieldName] = $field.val();
+                }
             });
 
-            // Make Request
             $.ajax({
-                url: $this.attr('action'),
+                url: $form.attr('action'),
                 type: 'POST',
                 data: values,
                 success: function success(data) {
+                    const hasError = Boolean(data && data.error === true);
+                    const message = data && data.message ? data.message : 'Subscription processed successfully.';
 
-                    if (data.error == true) {
-                        $('.form-result', $this).addClass('alert-warning').removeClass('alert-success alert-danger').fadeIn(200).show().fadeOut(5000);
-                    } else {
-                        $('.form-result', $this).addClass('alert-success').removeClass('alert-warning alert-danger').fadeIn(200).show().fadeOut(5000);
+                    if (hasError) {
+                        resetFormState(message, 'alert-warning', ['alert-success', 'alert-danger']);
+                        return;
                     }
-                    $('.form-result > .content', $this).html(data.message);
-                    $('button[type="submit"]', $this).removeClass('clicked');
-                    $this.trigger("reset");
+
+                    resetFormState(message, 'alert-success', ['alert-warning', 'alert-danger']);
+                    $form.trigger('reset');
                 },
                 error: function error() {
-                    $('.form-result', $this).addClass('alert-danger').removeClass('alert-warning alert-success').css('display', 'block');
-                    $('.form-result > .content', $this).html('Sorry, an error occurred.');
-                    $('button[type="submit"]', $this).removeClass('clicked');
+                    resetFormState('Sorry, an unexpected error occurred.', 'alert-danger', ['alert-warning', 'alert-success']);
                 }
             });
-            return false;
         });
-
     });
 
     /*-------------------------------------
@@ -62,10 +77,10 @@
     Vegas Slider
     -------------------------------------*/
     if ($.fn.vegas !== undefined && $("#vegas-slide").length) {
-        var target_slider = $("#vegas-slide"),
-            vegas_options = target_slider.data('vegas-options');
-        if (typeof vegas_options === "object") {
-            target_slider.vegas(vegas_options);
+        const targetSlider = $("#vegas-slide");
+        const vegasOptions = targetSlider.data('vegas-options');
+        if (typeof vegasOptions === "object") {
+            targetSlider.vegas(vegasOptions);
         }
     }
 
@@ -73,10 +88,10 @@
     Animated Headline
     -------------------------------------*/
     if ($.fn.animatedHeadline !== undefined && $(".ah-animate").length) {
-        var target_slider = $(".ah-animate"),
-            ah_options = target_slider.data('line-options');
-        if (typeof ah_options === "object") {
-            target_slider.animatedHeadline(ah_options);
+        const targetSlider = $(".ah-animate");
+        const ahOptions = targetSlider.data('line-options');
+        if (typeof ahOptions === "object") {
+            targetSlider.animatedHeadline(ahOptions);
         }
     }
 
@@ -84,7 +99,7 @@
     Section background image
     -------------------------------------*/
     $("[data-bg-image]").each(function() {
-        var img = $(this).data("bg-image");
+        const img = $(this).data("bg-image");
         $(this).css({
             backgroundImage: "url(" + img + ")"
         });
@@ -104,7 +119,7 @@
         /*-------------------------------------
         Countdown activation code
         -------------------------------------*/
-        var eventCounter = $(".countdown");
+        const eventCounter = $(".countdown");
         if (eventCounter.length) {
             eventCounter.countdown("2022/01/01", function(e) {
                 $(this).html(
@@ -115,5 +130,4 @@
             });
         }
     });
-
 })(jQuery);
